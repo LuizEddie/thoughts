@@ -32,7 +32,7 @@ module.exports = class AuthController{
         
         req.session.save(()=>{
             res.redirect('/');
-        })
+        });
     }
 
     static register(req, res){
