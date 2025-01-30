@@ -1,6 +1,8 @@
 const Thought = require('../models/Thought');
 const User = require('../models/User');
 
+const { Op } = require('sequelize');
+
 module.exports = class ThoughtsController {
     static async dashboard(req, res) {
         const userId = req.session.userid;
@@ -56,7 +58,38 @@ module.exports = class ThoughtsController {
     }
 
     static async showThoughts(req, res) {
-        res.render('thoughts/home');
+
+        let search = '';
+
+        if(req.query.search){
+            search = req.query.search;
+        }
+
+        let order = 'DESC';
+
+        if(req.query.order === 'old'){
+            order = 'ASC';
+        }else{
+            order = 'DESC';
+        }
+
+        const thoughtsData = await Thought.findAll({
+            include: User,
+            where: {
+                title: {[Op.like]: `%${search}%`}
+            },
+            order: [['createdAt', order]]
+        });
+
+        const thoughts = thoughtsData.map((result) => result.get({plain: true}));
+
+        let thoughtsQty = thoughts.length
+
+        if(thoughtsQty === 0){
+            thoughtsQty = false;
+        }
+
+        res.render('thoughts/home', {thoughts, search, thoughtsQty});
     }
 
     static async removeThought(req, res){
